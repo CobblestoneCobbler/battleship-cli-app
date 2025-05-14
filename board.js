@@ -22,6 +22,9 @@ export class Board {
   getPosition(position) {
     return this.board[position[0]][position[1]];
   }
+  getShips(){
+    return this.ships;
+  }
   checkForShip(letter, number) {
     //only to be used durring generation
     if (this.ships.length > 0) {
@@ -47,28 +50,28 @@ export class Board {
     for (let i = 0; i < ship.getLength(); i++) {
       let letter = tipPos[0];
       let number = tipPos[1];
-      if (direction === "N") {
+      if (direction === "n") {
         letter = tipPos[0].charCodeAt(0) + i;
         if (letter > 96 && letter < 96 + this.getSize()) {
           letter = String.fromCharCode(letter);
         } else {
           return false;
         }
-      } else if (direction === "S") {
+      } else if (direction === "s") {
         letter = tipPos[0].charCodeAt(0) - i;
         if (letter > 96 && letter < 96 + this.getSize()) {
           letter = String.fromCharCode(letter);
         } else {
           return false;
         }
-      } else if (direction === "E") {
+      } else if (direction === "e") {
         number -= i;
-        if (i < 0 || i > this.getSize()) {
+        if (number < 0 || number > this.getSize()) {
           return false;
         }
-      } else if (direction === "W") {
+      } else if (direction === "w") {
         number += i;
-        if (i < 0 || i > this.getSize()) {
+        if (number < 0 || number > this.getSize()) {
           return false;
         }
       }
@@ -86,16 +89,17 @@ export class Board {
   updateSpace(letter, number, char) {
     this.board[letter][number] = char;
   }
-  printBoard(debug) {
+  printBoard(debug = false) {
     if (debug) {
       for (const ship of this.ships) {
-        for (const [letter, number, hit] of ship.getPositions()) {
-          this.updateSpace(letter, number, ship.getHitIcon());
+        for (const position of ship.getPositions()) {
+          this.updateSpace(position[0], position[1], ship.getHitIcon());
         }
       }
     }
     console.log(`----- { ${this.name} } -----`);
     console.table(this.board);
+    
   }
   fire(position) {
     let ship = this.ships.find((n) => {
@@ -109,6 +113,7 @@ export class Board {
       }
       return false;
     });
+    console.log(ship);
     if (ship === undefined) {
       this.updateSpace(position[0], position[1], "X");
       return "missed!";
@@ -169,14 +174,3 @@ export class Ship {
     return this.sunk;
   }
 }
-
-let board = new Board("My Board");
-board.printBoard(false);
-let crusier = new Ship("Crusier", 2, 1, "C");
-let submarine = new Ship("Submarine", 3, 1, "S");
-board.addShip(crusier, ["a", 1], "N");
-board.addShip(submarine, ["f", 3], "E");
-console.log(board.fire(["a", 1]));
-console.log(board.fire(["b", 1]));
-board.printBoard(false);
-console.log(board.getPosition(["a", 1]));
