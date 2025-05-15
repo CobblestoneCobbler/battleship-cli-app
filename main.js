@@ -45,7 +45,7 @@ function main() {
         console.log("\n\n");
         boards[1].printBoard(true);
       }
-      shots.push(shot);
+      shots.push([shot.slice(0,1), shot.slice(1)]);
     }
     if(running === false){
       break;

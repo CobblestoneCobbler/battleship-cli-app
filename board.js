@@ -105,7 +105,7 @@ export class Board {
     let ship = this.ships.find((n) => {
       let i = 0;
       for (const pos of n.getPositions()) {
-        if (pos[0] === position[0] && pos[1] === position[1]) {
+        if (pos[0] == position[0] && pos[1] == position[1]) {
           n.hit(i);
           return true;
         }
@@ -113,7 +113,6 @@ export class Board {
       }
       return false;
     });
-    console.log(ship);
     if (ship === undefined) {
       this.updateSpace(position[0], position[1], "X");
       return "missed!";
@@ -168,7 +167,7 @@ export class Ship {
     }
     if (sinking) {
       this.sunk = true;
-    }
+     }
   }
   isSunk() {
     return this.sunk;
