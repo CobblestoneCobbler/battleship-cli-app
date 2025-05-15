@@ -35,17 +35,30 @@ function main() {
     console.log(`You have ${playerShots} shots this turn.`);
     for(let i = 0; i < playerShots; i++){
       //TODO will need validating
-      let shot = rs.question("Where would you like to fire? ");
-      if(shot === "end"){
-        running = false;
+      let aiming = true;
+      while(aiming){
+        let letter, number;
+        let shot = rs.question("Where would you like to fire? ");
+        if(shot === "end"){
+          running = false;
+          break;
+        }
+        if(shot === "debug"){
+          boards[0].printBoard(true);
+          console.log("\n\n");
+          boards[1].printBoard(true);
+        }
+        [letter, number] = [shot.slice(0,1), shot.slice(1)];
+        if(boards[1].getPosition([letter, number]) === "-"){
+          shots.push(letter, number);
+        }
+        else{
+          console.log("This space is occupied, shoot again.");
+        }
+      }
+      if(running === false){
         break;
       }
-      if(shot === "debug"){
-        boards[0].printBoard(true);
-        console.log("\n\n");
-        boards[1].printBoard(true);
-      }
-      shots.push([shot.slice(0,1), shot.slice(1)]);
     }
     if(running === false){
       break;
