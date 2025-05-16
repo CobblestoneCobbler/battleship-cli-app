@@ -12,99 +12,141 @@ let shipTypes = [
 let boards = [];
 let ships = [];
 
-
-function updateScreen(){
+function updateScreen() {
   boards[1].printBoard(false);
   console.log("\n\n-----------------------------------------------\n\n");
   boards[0].printBoard(false);
 }
 
-
 function main() {
   let running = true;
-  while(running){
-    
+  while (running) {
     updateScreen();
-    let playerShots = boards[0].getShips().reduce((acc,n) => {
-      if(n.isSunk() === false){
+    let playerShots = boards[0].getShips().reduce((acc, n) => {
+      if (n.isSunk() === false) {
         acc += n.getShots();
       }
       return acc;
     }, 0);
     let shots = [];
     console.log(`You have ${playerShots} shots this turn.`);
-    for(let i = 0; i < playerShots; i++){
+    for (let i = 0; i < playerShots; i++) {
       //TODO will need validating
       let aiming = true;
-      while(aiming){
+      while (aiming) {
+        if (shots.length > 0) {
+          console.log(`Your current shots are ${shots}.`);
+        }
         let letter, number;
-        let shot = rs.question("Where would you like to fire? ");
-        if(shot === "end"){
+        let shot = rs
+          .question("Where would you like to fire? ")
+          .trim()
+          .toLowerCase();
+        if (shot === "end") {
           running = false;
           break;
         }
-        if(shot === "debug"){
+        if (shot === "debug") {
           boards[0].printBoard(true);
           console.log("\n\n");
           boards[1].printBoard(true);
         }
-        [letter, number] = [shot.slice(0,1), shot.slice(1)];
-        if(boards[1].getPosition([letter, number]) === "-"){
-          shots.push(letter, number);
+        shot = shot.replace(" ", "");
+        if (shot.length === 2) {
+          [letter, number] = [shot.slice(0, 1), shot.slice(1)];
+          if (boards[1].getPosition([letter, number]) === "-") {
+            shots.push([letter, number]);
+            aiming = false;
+          }
+        } else if (shot.length % 2 === 0) {
+          [letter, number] = [shot.slice(0, 1), shot.slice(1, 2)];
+          if (boards[1].getPosition([letter, number]) === "-") {
+            shots.push([letter, number]);
+          }
+          if (i >= playerShots - 1) {
+            aiming = false;
+            console.log(`No sneaking in extra shots for you.`);
+          }
+          shot = shot.slice(2);
+          if (aiming) {
+            while (shot.length > 0) {
+              [letter, number] = [shot.slice(0, 1), shot.slice(1, 2)];
+              if (boards[1].getPosition([letter, number]) === "-") {
+                shots.push([letter, number]);
+                shot = shot.slice(2);
+                i++;
+                if (i >= playerShots) {
+                  aiming = false;
+                  break;
+                }
+              } else {
+                console.log(`Space ${letter}, ${number} is not a valid place`);
+                break;
+              }
+            }
+          }
         }
-        else{
+
+        if (aiming) {
           console.log("This space is occupied, shoot again.");
         }
       }
-      if(running === false){
+      if (running === false) {
         break;
       }
     }
-    if(running === false){
+    if (running === false) {
       break;
     }
     console.log("FIRE THE CANNONS!!");
-    for(let shot of shots){
+    for (let shot of shots) {
       console.log(boards[1].fire(shot));
     }
-    if(boards[1].getShips().reduce((acc,n) =>{
-      if(n.isSunk()=== false){
-        acc ++;
-      }
-      return acc;
-    }, 0) === 0){
+    if (
+      boards[1].getShips().reduce((acc, n) => {
+        if (n.isSunk() === false) {
+          acc++;
+        }
+        return acc;
+      }, 0) === 0
+    ) {
       console.log("Youve sunk them all!");
       running = false;
     }
-    console.log(` ships 0: ${boards[0].getShips()}  \n\n ships 1: ${boards[1].getShips()}`);
+    console.log(
+      ` ships 0: ${boards[0].getShips()}  \n\n ships 1: ${boards[1].getShips()}`
+    );
 
     //ai
-    let aiShots = boards[1].getShips().reduce((acc,n) => {
-      if(n.isSunk() === false){
+    let aiShots = boards[1].getShips().reduce((acc, n) => {
+      if (n.isSunk() === false) {
         acc += n.getShots();
       }
       return acc;
     }, 0);
     shots = [];
-    for(let i = 0; i < aiShots; i++){
-      let letter = String.fromCharCode(Math.floor(Math.random() * boards[0].getSize()) + 97);
+    for (let i = 0; i < aiShots; i++) {
+      let letter = String.fromCharCode(
+        Math.floor(Math.random() * boards[0].getSize()) + 97
+      );
       let number = Math.floor(Math.random() * boards[0].getSize());
-      shots.push([letter,number]);
+      shots.push([letter, number]);
     }
     console.log("Incoming Fire!");
-    for(let shot of shots){
+    for (let shot of shots) {
       boards[0].fire(shot);
     }
-    if(boards[0].getShips().reduce((acc,n) =>{
-      if(n.isSunk()=== false){
-        acc ++;
-      }
-      return acc;
-    }, 0) === 0){
+    if (
+      boards[0].getShips().reduce((acc, n) => {
+        if (n.isSunk() === false) {
+          acc++;
+        }
+        return acc;
+      }, 0) === 0
+    ) {
       console.log("Your fleet has be destroyed...");
       running = false;
     }
-
   }
 }
 
@@ -144,8 +186,8 @@ function setup(size, fleetSize) {
       }
     }
     console.log("Your fleet is set. Now where will the computer go?");
-    
-    for (let i = 4; i>=0; i--){
+
+    for (let i = 4; i >= 0; i--) {
       let ship = new Ship(
         shipTypes[i][0],
         shipTypes[i][1],
@@ -154,9 +196,9 @@ function setup(size, fleetSize) {
       );
       ships.push(ship);
       let unset = true;
-      while(unset){
+      while (unset) {
         let direction;
-        switch(Math.floor(Math.random() * 4)){
+        switch (Math.floor(Math.random() * 4)) {
           case 0:
             direction = "n";
             break;
@@ -174,10 +216,9 @@ function setup(size, fleetSize) {
         }
         let letter = String.fromCharCode(Math.floor(Math.random() * size) + 97);
         let number = Math.floor(Math.random() * size);
-        if(aiBoard.addShip(ship,[letter, number], direction) === false){
-          extraCycles ++;
-        }
-        else{
+        if (aiBoard.addShip(ship, [letter, number], direction) === false) {
+          extraCycles++;
+        } else {
           unset = false;
         }
       }
@@ -185,7 +226,9 @@ function setup(size, fleetSize) {
     boards = [playerBoard, aiBoard];
   }
 
-  console.log(`Computers board has been set, with ${extraCycles} extra cycles.`);
+  console.log(
+    `Computers board has been set, with ${extraCycles} extra cycles.`
+  );
   //prompt ship placements;
 }
 
