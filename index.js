@@ -32,6 +32,8 @@ function main() {
     console.log(`You have ${playerShots} shots this turn.`);
     for (let i = 0; i < playerShots; i++) {
       //TODO will need validating
+      //TODO Entering multiple does not advance i properly
+      //TODO cross check against current shots list.
       let aiming = true;
       while (aiming) {
         if (shots.length > 0) {
@@ -57,11 +59,15 @@ function main() {
           if (boards[1].getPosition([letter, number]) === "-") {
             shots.push([letter, number]);
             aiming = false;
+          } else {
+            console.log("This space is occupied");
           }
         } else if (shot.length % 2 === 0) {
           [letter, number] = [shot.slice(0, 1), shot.slice(1, 2)];
           if (boards[1].getPosition([letter, number]) === "-") {
             shots.push([letter, number]);
+          } else {
+            console.log("This space is occupied");
           }
           if (i >= playerShots - 1) {
             aiming = false;
@@ -88,7 +94,7 @@ function main() {
         }
 
         if (aiming) {
-          console.log("This space is occupied, shoot again.");
+          console.log("keep shooting.");
         }
       }
       if (running === false) {
@@ -118,6 +124,8 @@ function main() {
     );
 
     //ai
+    //TODO ensure they dont shoot at an already shot at space.
+    //TODO if i hit a ship, attack near it?
     let aiShots = boards[1].getShips().reduce((acc, n) => {
       if (n.isSunk() === false) {
         acc += n.getShots();
