@@ -32,7 +32,7 @@ function main() {
     console.log(`You have ${playerShots} shots this turn.`);
     for (let i = 0; i < playerShots; i++) {
       //TODO will need validating
-      //TODO Entering multiple does not advance i properly
+      //TODO Entering multiple does not advance i properly (allows 9 shots originally)
       //TODO cross check against current shots list.
       let aiming = true;
       while (aiming) {
@@ -133,14 +133,24 @@ function main() {
       return acc;
     }, 0);
     shots = [];
+    let cycles = 0;
     for (let i = 0; i < aiShots; i++) {
-      let letter = String.fromCharCode(
-        Math.floor(Math.random() * boards[0].getSize()) + 97
-      );
-      let number = Math.floor(Math.random() * boards[0].getSize());
-      shots.push([letter, number]);
+      let aiming = true;
+      while (aiming) {
+        let letter = String.fromCharCode(
+          Math.floor(Math.random() * boards[0].getSize()) + 97
+        );
+        let number = Math.floor(Math.random() * boards[0].getSize());
+        shots.push([letter, number]);
+        if (boards[0].getPosition([letter, number]) === "-") {
+          shots.push([letter, number]);
+          aiming = false;
+        } else {
+          cycles++;
+        }
+      }
     }
-    console.log("Incoming Fire!");
+    console.log(`Incoming Fire! Cpu extra cycles: ${cycles}`);
     for (let shot of shots) {
       boards[0].fire(shot);
     }
@@ -152,7 +162,7 @@ function main() {
         return acc;
       }, 0) === 0
     ) {
-      console.log("Your fleet has be destroyed...");
+      console.log("Your fleet has been destroyed...");
       running = false;
     }
   }
