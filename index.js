@@ -1,6 +1,5 @@
 import * as rs from "readline-sync";
 import { Board, Ship } from "./board.js";
-//TODO Fix the import to actually work...
 
 let shipTypes = [
   ["Crusier", 2, 1, "C"],
@@ -32,7 +31,6 @@ function main() {
     console.log(`You have ${playerShots} shots this turn.`);
     for (let i = 0; i < playerShots; i++) {
       //TODO will need validating
-      //TODO Entering multiple does not advance i properly (allows 9 shots originally)
       //TODO cross check against current shots list.
       let aiming = true;
       while (aiming) {
@@ -81,8 +79,8 @@ function main() {
                 shots.push([letter, number]);
                 shot = shot.slice(2);
                 i++;
-                if (i >= playerShots) {
-                  aiming = false;
+                aiming = false;
+                if (i >= playerShots - 1) {
                   break;
                 }
               } else {

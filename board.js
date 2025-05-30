@@ -22,7 +22,7 @@ export class Board {
   getPosition(position) {
     return this.board[position[0]][position[1]];
   }
-  getShips(){
+  getShips() {
     return this.ships;
   }
   checkForShip(letter, number) {
@@ -99,7 +99,7 @@ export class Board {
     }
     console.log(`----- { ${this.name} } -----`);
     console.table(this.board);
-    
+    // TODO add a new variable when debugging so that current board state doesnt get overriden
   }
   fire(position) {
     let ship = this.ships.find((n) => {
@@ -167,7 +167,7 @@ export class Ship {
     }
     if (sinking) {
       this.sunk = true;
-     }
+    }
   }
   isSunk() {
     return this.sunk;
