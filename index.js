@@ -54,18 +54,19 @@ function main() {
         shot = shot.replace(" ", "");
         if (shot.length === 2) {
           [letter, number] = [shot.slice(0, 1), shot.slice(1)];
+
           if (boards[1].getPosition([letter, number]) === "-") {
             shots.push([letter, number]);
             aiming = false;
           } else {
-            console.log("This space is occupied");
+            console.log("You cant shoot here.");
           }
         } else if (shot.length % 2 === 0) {
           [letter, number] = [shot.slice(0, 1), shot.slice(1, 2)];
           if (boards[1].getPosition([letter, number]) === "-") {
             shots.push([letter, number]);
           } else {
-            console.log("This space is occupied");
+            console.log("You cant shoot here.");
           }
           if (i >= playerShots - 1) {
             aiming = false;
@@ -174,73 +175,72 @@ function setup(size, fleetSize) {
   console.clear();
   playerBoard.printBoard();
   //TODO if size goes beyond 26 inputs will need double lettering, so ill just limit 26 later
-  if (fleetSize === 5) {
-    for (let i = 4; i >= 0; i--) {
-      let ship = new Ship(
-        shipTypes[i][0],
-        shipTypes[i][1],
-        shipTypes[i][2],
-        shipTypes[i][3]
-      );
-      ships.push(ship);
-      let unset = true;
-      while (unset) {
-        let position = rs.question(
-          `Where would you like to place the front of your ${ship.getName()}? It is ${ship.getLength()} tiles long.  `
-        );
-        let direction = rs.question(
-          `And which direction should she be sailing? [nsew]  `
-        );
-        // TODO direction and position user handling
-        if (playerBoard.addShip(ship, position, direction) === false) {
-          console.log(
-            `Sailing ${direction}, with the front at ${position}, is not able to happen.`
-          );
-        } else {
-          unset = false;
-        }
-      }
-    }
-    console.log("Your fleet is set. Now where will the computer go?");
 
-    for (let i = 4; i >= 0; i--) {
-      let ship = new Ship(
-        shipTypes[i][0],
-        shipTypes[i][1],
-        shipTypes[i][2],
-        shipTypes[i][3]
+  for (let i = fleetSize - 1; i >= 0; i--) {
+    let ship = new Ship(
+      shipTypes[i][0],
+      shipTypes[i][1],
+      shipTypes[i][2],
+      shipTypes[i][3]
+    );
+    ships.push(ship);
+    let unset = true;
+    while (unset) {
+      let position = rs.question(
+        `Where would you like to place the front of your ${ship.getName()}? It is ${ship.getLength()} tiles long.  `
       );
-      ships.push(ship);
-      let unset = true;
-      while (unset) {
-        let direction;
-        switch (Math.floor(Math.random() * 4)) {
-          case 0:
-            direction = "n";
-            break;
-          case 1:
-            direction = "s";
-            break;
-          case 2:
-            direction = "e";
-            break;
-          case 3:
-            direction = "w";
-          default:
-            direction = "n";
-            break;
-        }
-        let letter = String.fromCharCode(Math.floor(Math.random() * size) + 97);
-        let number = Math.floor(Math.random() * size);
-        if (aiBoard.addShip(ship, [letter, number], direction) === false) {
-          extraCycles++;
-        } else {
-          unset = false;
-        }
+      let direction = rs.question(
+        `And which direction should she be sailing? [nsew]  `
+      );
+      // TODO direction and position user handling
+      if (playerBoard.addShip(ship, position, direction) === false) {
+        console.log(
+          `Sailing ${direction}, with the front at ${position}, is not able to happen.`
+        );
+      } else {
+        unset = false;
       }
     }
-    boards = [playerBoard, aiBoard];
   }
+  console.log("Your fleet is set. Now where will the computer go?");
+
+  for (let i = fleetSize - 1; i >= 0; i--) {
+    let ship = new Ship(
+      shipTypes[i][0],
+      shipTypes[i][1],
+      shipTypes[i][2],
+      shipTypes[i][3]
+    );
+    ships.push(ship);
+    let unset = true;
+    while (unset) {
+      let direction;
+      switch (Math.floor(Math.random() * 4)) {
+        case 0:
+          direction = "n";
+          break;
+        case 1:
+          direction = "s";
+          break;
+        case 2:
+          direction = "e";
+          break;
+        case 3:
+          direction = "w";
+        default:
+          direction = "n";
+          break;
+      }
+      let letter = String.fromCharCode(Math.floor(Math.random() * size) + 97);
+      let number = Math.floor(Math.random() * size);
+      if (aiBoard.addShip(ship, [letter, number], direction) === false) {
+        extraCycles++;
+      } else {
+        unset = false;
+      }
+    }
+  }
+  boards = [playerBoard, aiBoard];
 
   console.log(
     `Computers board has been set, with ${extraCycles} extra cycles.`
@@ -259,17 +259,20 @@ while (running) {
     if (size < 3) {
       console.log(`A board of ${size} is a bit lame. Dream a little bigger.`);
       size = 0;
+    } else if (size < 7) {
+      fleetSize = size - 2;
+    } else if (size < 10) {
+      fleetSize = 4;
+    } else if (size === 10) {
+      console.log("Standard Battleship");
+      fleetSize = 5;
+    } else {
+      console.log(`${size} is a bit too big for me.`);
+      size = 0;
+      //fleetSize = Math.trunc((size * size) / 3);
     }
   }
-  if (size < 7) {
-    fleetSize = size - 2;
-  } else if (size === 10) {
-    console.log("Standard Battleship");
-    fleetSize = 5;
-  } else {
-    //TODO make this more realistic vvvv
-    fleetSize = Math.trunc((size * size) / 3);
-  }
+
   console.log(`A size of ${size}, lets give each player ${fleetSize} ships.`);
 
   setup(size, fleetSize);
