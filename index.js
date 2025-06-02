@@ -11,6 +11,7 @@ let shipTypes = [
 let boards = [];
 let ships = [];
 
+//TODO add args to allow a new call to update screen everytime new dialougue set is passed
 function updateScreen() {
   boards[1].printBoard(false);
   console.log("\n\n-----------------------------------------------\n\n");
@@ -35,13 +36,25 @@ function main() {
       let aiming = true;
       while (aiming) {
         if (shots.length > 0) {
-          console.log(`Your current shots are ${shots}.`);
+          console.log(
+            `Your current shots are ${shots}. You have ${
+              playerShots - shots.length
+            } shots remaining.`
+          );
         }
         let letter, number;
-        let shot = rs
-          .question("Where would you like to fire? ")
-          .trim()
-          .toLowerCase();
+        let shot = rs.question("Where would you like to fire? ");
+        if (shot.length > 0) {
+          shot = shot
+            .trim()
+            .toLowerCase()
+            .replaceAll(" ", "")
+            .replaceAll(",", "");
+        } else {
+          console.log("You cant leave this empty.");
+          continue;
+        }
+
         if (shot === "end") {
           running = false;
           break;
@@ -118,9 +131,6 @@ function main() {
       console.log("Youve sunk them all!");
       running = false;
     }
-    console.log(
-      ` ships 0: ${boards[0].getShips()}  \n\n ships 1: ${boards[1].getShips()}`
-    );
 
     //ai
     //TODO ensure they dont shoot at an already shot at space.
