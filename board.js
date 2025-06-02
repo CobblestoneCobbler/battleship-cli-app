@@ -88,16 +88,19 @@ export class Board {
     this.board[letter][number] = char;
   }
   printBoard(debug = false) {
+    console.log(`----- { ${this.name} } -----`);
     if (debug) {
+      let board = structuredClone(this.board);
       for (const ship of this.ships) {
         for (const position of ship.getPositions()) {
-          this.updateSpace(position[0], position[1], ship.getHitIcon());
+          board[position[0]][position[1]] = ship.getHitIcon();
         }
       }
+      console.log("Debug");
+      console.table(board);
+    } else {
+      console.table(this.board);
     }
-    console.log(`----- { ${this.name} } -----`);
-    console.table(this.board);
-    // TODO add a new variable when debugging so that current board state doesnt get overriden
   }
   fire(position) {
     let ship = this.ships.find((n) => {
