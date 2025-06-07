@@ -116,7 +116,7 @@ export class Board {
     });
     if (ship === undefined) {
       this.updateSpace(position[0], position[1], "X");
-      return "missed!";
+      return "miss";
     } else {
       this.updateSpace(position[0], position[1], ship.getHitIcon());
       if (ship.isSunk()) {

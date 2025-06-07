@@ -11,8 +11,8 @@ let shipTypes = [
 let boards = [];
 let ships = [];
 
-//TODO add args to allow a new call to update screen everytime new dialougue set is passed
 function updateScreen() {
+  console.clear();
   boards[1].printBoard(false);
   console.log("\n\n-----------------------------------------------\n\n");
   boards[0].printBoard(false);
@@ -20,8 +20,8 @@ function updateScreen() {
 
 function main() {
   let running = true;
+  let output = "";
   while (running) {
-    updateScreen();
     let playerShots = boards[0].getShips().reduce((acc, n) => {
       if (n.isSunk() === false) {
         acc += n.getShots();
@@ -29,18 +29,23 @@ function main() {
       return acc;
     }, 0);
     let shots = [];
-    console.log(`You have ${playerShots} shots this turn.`);
-    for (let i = 0; i < playerShots; i++) {
-      //TODO will need validating
-      //TODO cross check against current shots list.
+    let moveStart = true;
+
+    updateScreen();
+    for (let i = 0; i < playerShots; i += 0) {
       let aiming = true;
       while (aiming) {
         if (shots.length > 0) {
-          console.log(
-            `Your current shots are ${shots}. You have ${
-              playerShots - shots.length
-            } shots remaining.`
-          );
+          output += `Your current shots are ${shots}. You have ${
+            playerShots - shots.length
+          } shots remaining.`;
+        }
+        updateScreen();
+        console.log(output);
+        output = "";
+        if (moveStart) {
+          console.log(`You have ${playerShots} shots this turn.`);
+          moveStart = false;
         }
         let letter, number;
         let shot = rs.question("Where would you like to fire? ");
@@ -54,7 +59,6 @@ function main() {
           console.log("You cant leave this empty.");
           continue;
         }
-
         if (shot === "end") {
           running = false;
           break;
@@ -64,49 +68,32 @@ function main() {
           console.log("\n\n");
           boards[1].printBoard(true);
         }
-        shot = shot.replace(" ", "");
-        if (shot.length === 2) {
-          [letter, number] = [shot.slice(0, 1), shot.slice(1)];
-
-          if (boards[1].getPosition([letter, number]) === "-") {
-            shots.push([letter, number]);
+        while (shot.length > 0) {
+          if (i >= playerShots) {
             aiming = false;
-          } else {
-            console.log("You cant shoot here.");
+            output += `No sneaking in extra shots for you. \n` + output;
+            break;
           }
-        } else if (shot.length % 2 === 0) {
           [letter, number] = [shot.slice(0, 1), shot.slice(1, 2)];
-          if (boards[1].getPosition([letter, number]) === "-") {
-            shots.push([letter, number]);
-          } else {
-            console.log("You cant shoot here.");
-          }
-          if (i >= playerShots - 1) {
-            aiming = false;
-            console.log(`No sneaking in extra shots for you.`);
-          }
           shot = shot.slice(2);
-          if (aiming) {
-            while (shot.length > 0) {
-              [letter, number] = [shot.slice(0, 1), shot.slice(1, 2)];
-              if (boards[1].getPosition([letter, number]) === "-") {
-                shots.push([letter, number]);
-                shot = shot.slice(2);
-                i++;
-                aiming = false;
-                if (i >= playerShots - 1) {
-                  break;
-                }
-              } else {
-                console.log(`Space ${letter}, ${number} is not a valid place`);
-                break;
-              }
+          let alreadyShot = false;
+          for (let set of shots) {
+            if (set[0] === letter && set[1] === number) {
+              alreadyShot = true;
+              output += `You already shot at ${letter}${number}.\n`;
+              break;
             }
           }
-        }
-
-        if (aiming) {
-          console.log("keep shooting.");
+          if (alreadyShot) {
+            continue;
+          }
+          if (boards[1].getPosition([letter, number]) === "-") {
+            shots.push([letter, number]);
+            i++;
+            aiming = false;
+          } else {
+            output += `You cant shoot at ${letter}${number}.`;
+          }
         }
       }
       if (running === false) {
@@ -118,7 +105,10 @@ function main() {
     }
     console.log("FIRE THE CANNONS!!");
     for (let shot of shots) {
-      console.log(boards[1].fire(shot));
+      let result = boards[1].fire(shot);
+      if (result !== "miss") {
+        output += `${shot[0]}${shot[1]} has ${result}\n`;
+      }
     }
     if (
       boards[1].getShips().reduce((acc, n) => {
@@ -128,7 +118,9 @@ function main() {
         return acc;
       }, 0) === 0
     ) {
-      console.log("Youve sunk them all!");
+      updateScreen();
+      console.log(output);
+      console.log("You've sunk them all!");
       running = false;
     }
 
