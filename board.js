@@ -126,6 +126,16 @@ export class Board {
       }
     }
   }
+  getRevealedShips() {
+    let revealedShips = this.ships.filter((s) => {
+      if (s.isRevealed() && !s.isSunk()) {
+        return true;
+      } else return false;
+    });
+    if (revealedShips.length > 0) {
+      return revealedShips;
+    } else return false;
+  }
 }
 export class Ship {
   constructor(name, length, shots, hitIcon = "!") {
@@ -134,6 +144,7 @@ export class Ship {
     this.shots = shots;
     this.hitIcon = hitIcon;
 
+    this.revealed = false;
     this.sunk = false;
     this.positions = [];
   }
@@ -153,6 +164,18 @@ export class Ship {
   getPositions() {
     return this.positions;
   }
+  getHitPositions() {
+    let arry = [];
+    for (const pos of this.positions) {
+      if (pos[2] === true) {
+        arry.push([pos[0], pos[1]]);
+      }
+    }
+    return arry;
+  }
+  isRevealed() {
+    return this.revealed;
+  }
 
   setPositions(arry) {
     this.positions = arry;
@@ -160,6 +183,7 @@ export class Ship {
 
   hit(position) {
     this.positions[position][2] = true;
+    this.revealed = true;
     let sinking = true;
     for (const pos of this.positions) {
       if (pos[2] === false) {

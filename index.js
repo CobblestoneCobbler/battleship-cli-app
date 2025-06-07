@@ -138,16 +138,116 @@ function main() {
     for (let i = 0; i < aiShots; i++) {
       let aiming = true;
       while (aiming) {
-        let letter = String.fromCharCode(
-          Math.floor(Math.random() * boards[0].getSize()) + 97
-        );
-        let number = Math.floor(Math.random() * boards[0].getSize());
-        shots.push([letter, number]);
-        if (boards[0].getPosition([letter, number]) === "-") {
-          shots.push([letter, number]);
-          aiming = false;
+        let letter, number;
+        let ships = boards[0].getRevealedShips();
+        if (ships !== false) {
+          let positions = ships[0].getHitPositions();
+          if (positions.length > 1) {
+            //figure out up and down or left and right
+          } else {
+            let undecided = true;
+            while (undecided) {
+              switch (Math.floor(Math.random() * 4)) {
+                case 0: {
+                  if (
+                    positions[0][0] === "a" ||
+                    !(
+                      boards[0].getPosition([
+                        String.fromCharCode(positions[0][0].charCodeAt(0) - 1),
+                        positions[0][1],
+                      ]) === "-"
+                    )
+                  ) {
+                    cycles++;
+                    continue;
+                  } else {
+                    undecided = false;
+                    shots.push([
+                      String.fromCharCode(positions[0][0].charCodeAt(0) - 1),
+                      positions[0][1],
+                    ]);
+                    aiming = false;
+                    break;
+                  }
+                }
+                case 1: {
+                  if (
+                    positions[0][0] ===
+                      String.fromCharCode(boards[0].getSize() + 97) ||
+                    !(
+                      boards[0].getPosition([
+                        String.fromCharCode(positions[0][0].charCodeAt(0) + 1),
+                        positions[0][1],
+                      ]) === "-"
+                    )
+                  ) {
+                    cycles++;
+                    continue;
+                  } else {
+                    undecided = false;
+                    shots.push([
+                      String.fromCharCode(positions[0][0].charCodeAt(0) + 1),
+                      positions[0][1],
+                    ]);
+                    aiming = false;
+                    break;
+                  }
+                }
+                case 2: {
+                  if (
+                    positions[0][1] === 0 ||
+                    !(
+                      boards[0].getPosition([
+                        positions[0][0],
+                        positions[0][1] - 1,
+                      ]) === "-"
+                    )
+                  ) {
+                    cycles++;
+                    continue;
+                  } else {
+                    undecided = false;
+                    shots.push([positions[0][0], positions[0][1] - 1]);
+                    aiming = false;
+                    break;
+                  }
+                }
+                case 3: {
+                  if (
+                    positions[0][1] === boards[0].getSize() - 1 ||
+                    !(
+                      boards[0].getPosition([
+                        positions[0][0],
+                        positions[0][1] + 1,
+                      ]) === "-"
+                    )
+                  ) {
+                    cycles++;
+                    continue;
+                  } else {
+                    undecided = false;
+                    shots.push([positions[0][0], positions[0][1] + 1]);
+                    aiming = false;
+                    break;
+                  }
+                }
+                default: {
+                  output += "AI UNDECIDED OUT OF SCOPE \n";
+                }
+              }
+            }
+          }
         } else {
-          cycles++;
+          letter = String.fromCharCode(
+            Math.floor(Math.random() * boards[0].getSize()) + 97
+          );
+          number = Math.floor(Math.random() * boards[0].getSize());
+          if (boards[0].getPosition([letter, number]) === "-") {
+            shots.push([letter, number]);
+            aiming = false;
+          } else {
+            cycles++;
+          }
         }
       }
     }
