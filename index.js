@@ -11,16 +11,17 @@ let shipTypes = [
 let boards = [];
 let ships = [];
 
-function updateScreen() {
+function updateScreen(debugging = false) {
   console.clear();
-  boards[1].printBoard(false);
+  boards[1].printBoard(debugging);
   console.log("\n\n-----------------------------------------------\n\n");
-  boards[0].printBoard(false);
+  boards[0].printBoard(debugging);
 }
 
 function main() {
   let running = true;
   let output = "";
+  let debugging = false;
   while (running) {
     let playerShots = boards[0].getShips().reduce((acc, n) => {
       if (n.isSunk() === false) {
@@ -40,9 +41,10 @@ function main() {
             playerShots - shots.length
           } shots remaining.`;
         }
-        updateScreen();
+        updateScreen(debugging);
         console.log(output);
         output = "";
+        debugging = false;
         if (moveStart) {
           console.log(`You have ${playerShots} shots this turn.`);
           moveStart = false;
@@ -64,9 +66,8 @@ function main() {
           break;
         }
         if (shot === "debug") {
-          boards[0].printBoard(true);
-          console.log("\n\n");
-          boards[1].printBoard(true);
+          debugging = true;
+          continue;
         }
         while (shot.length > 0) {
           if (i >= playerShots) {
@@ -140,10 +141,126 @@ function main() {
       while (aiming) {
         let letter, number;
         let ships = boards[0].getRevealedShips();
-        if (ships !== false) {
-          let positions = ships[0].getHitPositions();
+        if (ships !== false && i < ships.length) {
+          let positions = ships[i].getHitPositions();
           if (positions.length > 1) {
+            let undecided = true;
+            let dir;
+            let distance = 1;
             //figure out up and down or left and right
+            if (positions[0][0] === positions[1][0]) {
+              letter = positions[0][0];
+              if (positions[0][1] < positions[1][1]) {
+                //sailing west, numbers will increment. May have hit mid ship though
+                dir = "pos";
+              } else {
+                //sailing east, numbers will decrease. May have hit mid ship though
+                dir = "neg";
+              }
+
+              while (undecided) {
+                console.log(
+                  `distance: ${distance}, position: ${positions[0][0]},${positions[0][1]} axis: Letter is constant, dir: ${dir}.`
+                );
+
+                if (dir === "pos") {
+                  if (positions[0][1] + distance < boards[0].getSize()) {
+                    let pos = boards[0].getPosition([
+                      letter,
+                      positions[0][1] + distance,
+                    ]);
+                    if (pos === "-") {
+                      number = positions[0][1] + distance;
+                      undecided = false;
+                    } else if (pos === "X") {
+                      dir = "neg";
+                      distance = 1;
+                      continue;
+                    }
+                  } else {
+                    distance = 1;
+                    dir = "neg";
+                    continue;
+                  }
+                } else {
+                  if (positions[0][1] - distance > 0) {
+                    let pos = boards[0].getPosition([
+                      letter,
+                      positions[0][1] - distance,
+                    ]);
+                    if (pos === "-") {
+                      number = positions[0][1] - distance;
+                      undecided = false;
+                    } else if (pos === "X") {
+                      dir = "pos";
+                      distance = 1;
+                      continue;
+                    }
+                  } else {
+                    distance = 1;
+                    dir = "pos";
+                    continue;
+                  }
+                }
+                distance++;
+              }
+            } else {
+              //number is axis
+              number = positions[0][1];
+              if (positions[0][0] < positions[1][0]) {
+                //sailing North, numbers will increment. May have hit mid ship though
+                dir = "pos";
+              } else {
+                //sailing south, numbers will decrease. May have hit mid ship though
+                dir = "neg";
+              }
+              const charCode = positions[0][0].charCodeAt(0);
+              while (undecided) {
+                console.log(
+                  `distance: ${distance}, position: ${positions[0][0]},${positions[0][1]} axis: number is constant, dir: ${dir}.`
+                );
+                if (dir === "pos") {
+                  if (charCode + distance < 97 + boards[0].getSize()) {
+                    let pos = boards[0].getPosition([
+                      String.fromCharCode(charCode + distance),
+                      number,
+                    ]);
+                    if (pos === "-") {
+                      letter = String.fromCharCode(charCode + distance);
+                      undecided = false;
+                    } else if (pos === "X") {
+                      dir = "neg";
+                      distance = 1;
+                      continue;
+                    }
+                  } else {
+                    distance = 1;
+                    dir = "neg";
+                    continue;
+                  }
+                } else {
+                  if (charCode - distance > 96) {
+                    let pos = boards[0].getPosition([
+                      String.fromCharCode(charCode - distance),
+                      number,
+                    ]);
+                    if (pos === "-") {
+                      letter = String.fromCharCode(charCode - distance);
+                      undecided = false;
+                    } else if (pos === "X") {
+                      dir = "pos";
+                      distance = 1;
+                      continue;
+                    }
+                  } else {
+                    distance = 1;
+                    dir = "pos";
+                    continue;
+                  }
+                }
+                distance++;
+              }
+            }
           } else {
             let undecided = true;
             while (undecided) {
@@ -162,10 +279,10 @@ function main() {
                     continue;
                   } else {
                     undecided = false;
-                    shots.push([
-                      String.fromCharCode(positions[0][0].charCodeAt(0) - 1),
-                      positions[0][1],
-                    ]);
+                    letter = String.fromCharCode(
+                      positions[0][0].charCodeAt(0) - 1
+                    );
+                    number = positions[0][1];
                     aiming = false;
                     break;
                   }
@@ -185,10 +302,10 @@ function main() {
                     continue;
                   } else {
                     undecided = false;
-                    shots.push([
-                      String.fromCharCode(positions[0][0].charCodeAt(0) + 1),
-                      positions[0][1],
-                    ]);
+                    letter = String.fromCharCode(
+                      positions[0][0].charCodeAt(0) + 1
+                    );
+                    number = positions[0][1];
                     aiming = false;
                     break;
                   }
@@ -207,7 +324,8 @@ function main() {
                     continue;
                   } else {
                     undecided = false;
-                    shots.push([positions[0][0], positions[0][1] - 1]);
+                    letter = positions[0][0];
+                    number = positions[0][1] - 1;
                     aiming = false;
                     break;
                   }
@@ -226,7 +344,8 @@ function main() {
                     continue;
                   } else {
                     undecided = false;
-                    shots.push([positions[0][0], positions[0][1] + 1]);
+                    letter = positions[0][0];
+                    number = positions[0][1] + 1;
                     aiming = false;
                     break;
                   }
@@ -242,12 +361,23 @@ function main() {
             Math.floor(Math.random() * boards[0].getSize()) + 97
           );
           number = Math.floor(Math.random() * boards[0].getSize());
-          if (boards[0].getPosition([letter, number]) === "-") {
-            shots.push([letter, number]);
-            aiming = false;
-          } else {
-            cycles++;
+        }
+        if (boards[0].getPosition([letter, number]) === "-") {
+          let alreadyShot = false;
+          for (let set of shots) {
+            if (set[0] === letter && set[1] === number) {
+              alreadyShot = true;
+              break;
+            }
           }
+          if (alreadyShot) {
+            cycles++;
+            continue;
+          }
+          shots.push([letter, number]);
+          aiming = false;
+        } else {
+          cycles++;
         }
       }
     }
@@ -295,6 +425,8 @@ function setup(size, fleetSize) {
         `And which direction should she be sailing? [nsew]  `
       );
       // TODO direction and position user handling
+      //TODO Validation in set to avoid NaN
+
       if (playerBoard.addShip(ship, position, direction) === false) {
         console.log(
           `Sailing ${direction}, with the front at ${position}, is not able to happen.`

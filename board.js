@@ -18,6 +18,9 @@ export class Board {
     return this.size;
   }
   getPosition(position) {
+    if (this.board[position[0]] === undefined) {
+      return undefined;
+    }
     return this.board[position[0]][position[1]];
   }
   getShips() {
@@ -47,17 +50,17 @@ export class Board {
     let positions = [];
     for (let i = 0; i < ship.getLength(); i++) {
       let letter = tipPos[0];
-      let number = tipPos[1];
+      let number = Number(tipPos[1]);
       if (direction === "n") {
         letter = tipPos[0].charCodeAt(0) + i;
-        if (letter > 96 && letter < 96 + this.getSize()) {
+        if (letter > 96 && letter < 97 + this.getSize()) {
           letter = String.fromCharCode(letter);
         } else {
           return false;
         }
       } else if (direction === "s") {
         letter = tipPos[0].charCodeAt(0) - i;
-        if (letter > 96 && letter < 96 + this.getSize()) {
+        if (letter > 96 && letter < 97 + this.getSize()) {
           letter = String.fromCharCode(letter);
         } else {
           return false;
