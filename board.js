@@ -8,7 +8,6 @@ export class Board {
       arry.push("-");
     }
     for (let i = 0; i < size; i++) {
-      let key = i + 97;
       this.board[String.fromCharCode(i + 97)] = Array.from(arry);
     }
 
@@ -51,32 +50,46 @@ export class Board {
     for (let i = 0; i < ship.getLength(); i++) {
       let letter = tipPos[0];
       let number = Number(tipPos[1]);
-      if (direction === "n") {
-        letter = tipPos[0].charCodeAt(0) + i;
-        if (letter > 96 && letter < 97 + this.getSize()) {
-          letter = String.fromCharCode(letter);
-        } else {
-          return false;
+      switch (direction) {
+        case "n": {
+          letter = tipPos[0].charCodeAt(0) + i;
+          if (letter > 96 && letter < 97 + this.getSize()) {
+            letter = String.fromCharCode(letter);
+          } else {
+            return false;
+          }
+          break;
         }
-      } else if (direction === "s") {
-        letter = tipPos[0].charCodeAt(0) - i;
-        if (letter > 96 && letter < 97 + this.getSize()) {
-          letter = String.fromCharCode(letter);
-        } else {
-          return false;
+        case "s": {
+          letter = tipPos[0].charCodeAt(0) - i;
+          if (letter > 96 && letter < 97 + this.getSize()) {
+            letter = String.fromCharCode(letter);
+          } else {
+            return false;
+          }
+          break;
         }
-      } else if (direction === "e") {
-        number -= i;
-        if (number < 0 || number > this.getSize()) {
-          return false;
+        case "e": {
+          number -= i;
+          if (number < 0 || number > this.getSize()) {
+            return false;
+          }
+          break;
         }
-      } else if (direction === "w") {
-        number += i;
-        if (number < 0 || number > this.getSize()) {
+        case "w": {
+          number += i;
+          if (number < 0 || number > this.getSize()) {
+            return false;
+          }
+          break;
+        }
+        default: {
           return false;
         }
       }
-
+      if (this.getPosition([letter, number]) !== "-") {
+        return false;
+      }
       if (this.checkForShip(letter, number)) {
         return false;
       } else {

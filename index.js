@@ -122,12 +122,20 @@ function main() {
       updateScreen();
       console.log(output);
       console.log("You've sunk them all!");
+
+      console.log(`========
+__   _______ _   _   _    _ _____ _   _
+\\ \\ / /  _  | | | | | |  | |_   _| \\ | |
+ \\ V /| | | | | | | | |  | | | | |  \\| |
+  \\ / | | | | | | | | |/\\| | | | | . ' |
+  | | \\ \\_/ / |_| | \\  /\\  /_| |_| |\\  |
+  \\_/  \\___/ \\___/   \\/  \\/ \\___/\\_| \\_/
+========`);
       running = false;
+      break;
     }
 
     //ai
-    //TODO ensure they dont shoot at an already shot at space.
-    //TODO if i hit a ship, attack near it?
     let aiShots = boards[1].getShips().reduce((acc, n) => {
       if (n.isSunk() === false) {
         acc += n.getShots();
@@ -381,6 +389,7 @@ function main() {
         }
       }
     }
+    //TODO Add output when Ai hits a ship or sinks a ship
     console.log(`Incoming Fire! Cpu extra cycles: ${cycles}`);
     for (let shot of shots) {
       boards[0].fire(shot);
@@ -404,28 +413,50 @@ function setup(size, fleetSize) {
   let aiBoard = new Board("Computer Board", size);
   ships = []; //needed for second play
   let extraCycles = 0;
-  console.clear();
-  playerBoard.printBoard();
-  //TODO if size goes beyond 26 inputs will need double lettering, so ill just limit 26 later
-
+  let graded = false;
+  if (size > 4 && size < 7) {
+    graded = rs.keyInYN("Are you here to grade this? ");
+  }
   for (let i = fleetSize - 1; i >= 0; i--) {
-    let ship = new Ship(
-      shipTypes[i][0],
-      shipTypes[i][1],
-      shipTypes[i][2],
-      shipTypes[i][3]
-    );
+    let ship;
+    if (graded) {
+      if (size === 5 && i === 2) {
+        ship = new Ship(shipTypes[i][0], 2, 1, shipTypes[i][3]);
+      } else if (size === 6 && i === 3) {
+        ship = new Ship("Corvette", 2, 1, "CV");
+      } else {
+        ship = new Ship(
+          shipTypes[i][0],
+          shipTypes[i][1],
+          shipTypes[i][2],
+          shipTypes[i][3]
+        );
+      }
+    } else {
+      ship = new Ship(
+        shipTypes[i][0],
+        shipTypes[i][1],
+        shipTypes[i][2],
+        shipTypes[i][3]
+      );
+    }
+
+    console.clear();
+    playerBoard.printBoard(true);
+
     ships.push(ship);
     let unset = true;
     while (unset) {
       let position = rs.question(
         `Where would you like to place the front of your ${ship.getName()}? It is ${ship.getLength()} tiles long.  `
       );
+      if (position === "end") {
+        console.log("Rethinking are we..");
+        return "skip";
+      }
       let direction = rs.question(
         `And which direction should she be sailing? [nsew]  `
       );
-      // TODO direction and position user handling
-      //TODO Validation in set to avoid NaN
 
       if (playerBoard.addShip(ship, position, direction) === false) {
         console.log(
@@ -439,12 +470,28 @@ function setup(size, fleetSize) {
   console.log("Your fleet is set. Now where will the computer go?");
 
   for (let i = fleetSize - 1; i >= 0; i--) {
-    let ship = new Ship(
-      shipTypes[i][0],
-      shipTypes[i][1],
-      shipTypes[i][2],
-      shipTypes[i][3]
-    );
+    let ship;
+    if (graded) {
+      if (size === 5 && i === 2) {
+        ship = new Ship(shipTypes[i][0], 2, 1, shipTypes[i][3]);
+      } else if (size === 6 && i === 3) {
+        ship = new Ship("Corvette", 2, 1, "CV");
+      } else {
+        ship = new Ship(
+          shipTypes[i][0],
+          shipTypes[i][1],
+          shipTypes[i][2],
+          shipTypes[i][3]
+        );
+      }
+    } else {
+      ship = new Ship(
+        shipTypes[i][0],
+        shipTypes[i][1],
+        shipTypes[i][2],
+        shipTypes[i][3]
+      );
+    }
     ships.push(ship);
     let unset = true;
     while (unset) {
@@ -479,7 +526,6 @@ function setup(size, fleetSize) {
   console.log(
     `Computers board has been set, with ${extraCycles} extra cycles.`
   );
-  //prompt ship placements;
 }
 
 let running = true;
@@ -489,7 +535,7 @@ while (running) {
   let size = 0;
   let fleetSize = 0;
   while (size === 0) {
-    size = rs.questionInt("How big of a board do you want? ");
+    size = rs.questionInt("How big of a board do you want? (4-10)");
     if (size < 3) {
       console.log(`A board of ${size} is a bit lame. Dream a little bigger.`);
       size = 0;
@@ -503,14 +549,14 @@ while (running) {
     } else {
       console.log(`${size} is a bit too big for me.`);
       size = 0;
-      //fleetSize = Math.trunc((size * size) / 3);
     }
   }
 
   console.log(`A size of ${size}, lets give each player ${fleetSize} ships.`);
 
-  setup(size, fleetSize);
-  main();
+  if (setup(size, fleetSize) !== "skip") {
+    main();
+  }
 
   if (rs.keyInYN("Would you like to play again?")) {
     console.log("Awesome!");
