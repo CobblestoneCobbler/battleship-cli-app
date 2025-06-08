@@ -143,6 +143,8 @@ __   _______ _   _   _    _ _____ _   _
       return acc;
     }, 0);
     shots = [];
+
+    //TODO Axis letter infinite loop (j0 Sailing west, hit j1, j2, loop after j3 === X, cannot find j0)
     let cycles = 0;
     for (let i = 0; i < aiShots; i++) {
       let aiming = true;
