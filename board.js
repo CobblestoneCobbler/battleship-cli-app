@@ -17,10 +17,8 @@ export class Board {
     return this.size;
   }
   getPosition(position) {
-    if (this.board[position[0]] === undefined) {
-      return undefined;
-    }
-    return this.board[position[0]][position[1]];
+    //TODO Learn what notation this is
+    return this.board[position[0]]?.[position[1]];
   }
   getShips() {
     return this.ships;
@@ -34,13 +32,8 @@ export class Board {
             return true;
           }
         }
-        return false;
       });
-      if (ship != undefined) {
-        return true;
-      } else {
-        return false;
-      }
+      return !ship;
     } else {
       return false;
     }
@@ -48,52 +41,45 @@ export class Board {
   addShip(ship, tipPos, direction) {
     let positions = [];
     for (let i = 0; i < ship.getLength(); i++) {
-      let letter = tipPos[0];
+      let letter = tipPos[0].charCodeAt(0);
       let number = Number(tipPos[1]);
       switch (direction) {
         case "n": {
-          letter = tipPos[0].charCodeAt(0) + i;
-          if (letter > 96 && letter < 97 + this.getSize()) {
-            letter = String.fromCharCode(letter);
-          } else {
-            return false;
-          }
+          letter += i;
           break;
         }
         case "s": {
-          letter = tipPos[0].charCodeAt(0) - i;
-          if (letter > 96 && letter < 97 + this.getSize()) {
-            letter = String.fromCharCode(letter);
-          } else {
-            return false;
-          }
+          letter -= i;
           break;
         }
         case "e": {
           number -= i;
-          if (number < 0 || number > this.getSize()) {
-            return false;
-          }
           break;
         }
         case "w": {
           number += i;
-          if (number < 0 || number > this.getSize()) {
-            return false;
-          }
           break;
         }
         default: {
           return false;
         }
       }
-      if (this.getPosition([letter, number]) !== "-") {
-        return false;
+      //TODO check the letter and number validation
+      if (
+        letter > 96 &&
+        letter < 97 + this.getSize() &&
+        number >= 0 &&
+        number < this.getSize()
+      ) {
+        letter = String.fromCharCode(letter);
       }
-      if (this.checkForShip(letter, number)) {
-        return false;
-      } else {
+      if (
+        this.getPosition([letter, number]) === "-" &&
+        !this.checkForShip(letter, number)
+      ) {
         positions.push([letter, number, false]);
+      } else {
+        return false;
       }
     }
     ship.setPositions(positions);

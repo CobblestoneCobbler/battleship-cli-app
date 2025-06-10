@@ -10,6 +10,68 @@ let shipTypes = [
 ];
 let boards = [];
 let ships = [];
+const minBoardSize = 4;
+const maxBoardSize = 10;
+let debugging = false;
+let output = "";
+
+function testShot([letter, number], shots) {
+  let alreadyShot = false;
+  //TODO switch to find
+  for (let set of shots) {
+    if (set[0] === letter && set[1] === number) {
+      alreadyShot = true;
+      output += `You already shot at ${letter}${number}.\n`;
+      break;
+    }
+  }
+  if (!alreadyShot && boards[1].getPosition([letter, number]) === "-") {
+    shots.push([letter, number]);
+    aiming = false;
+  } else {
+    output += `You cant shoot at ${letter}${number}.`;
+  }
+}
+
+function playerAiming(shotCount) {
+  let aiming = true;
+  let shots = [];
+  while (aiming) {
+    //TODO check for full board
+    if (shots.length > 0) {
+      output += `Your current shots are ${shots}. You have ${shotCount} shots remaining.`;
+    }
+    updateScreen(debugging);
+    console.log(output);
+    output = "";
+    debugging = false;
+
+    let shot = rs.question("Where would you like to fire? ");
+    if (shot.length > 0) {
+      shot = shot.trim().toLowerCase().replaceAll(" ", "").replaceAll(",", "");
+    } else {
+      console.log("You cant leave this empty.");
+      continue;
+    }
+    if (shot === "end") {
+      running = false;
+      break;
+    }
+    if (shot === "debug") {
+      debugging = true;
+      continue;
+    }
+    while (shot.length > 0) {
+      if (shotCount <= 0) {
+        aiming = false;
+        output += `No sneaking in extra shots for you. \n` + output;
+        break;
+      }
+      testShot([shot.slice(0, 1), shot.slice(1, 2)], shots);
+      shot = shot.slice(2);
+    }
+  }
+}
 
 function updateScreen(debugging = false) {
   console.clear();
@@ -21,7 +83,6 @@ function updateScreen(debugging = false) {
 function main() {
   let running = true;
   let output = "";
-  let debugging = false;
   while (running) {
     let playerShots = boards[0].getShips().reduce((acc, n) => {
       if (n.isSunk() === false) {
@@ -30,80 +91,11 @@ function main() {
       return acc;
     }, 0);
     let shots = [];
-    let moveStart = true;
 
     updateScreen();
-    for (let i = 0; i < playerShots; i += 0) {
-      let aiming = true;
-      while (aiming) {
-        if (shots.length > 0) {
-          output += `Your current shots are ${shots}. You have ${
-            playerShots - shots.length
-          } shots remaining.`;
-        }
-        updateScreen(debugging);
-        console.log(output);
-        output = "";
-        debugging = false;
-        if (moveStart) {
-          console.log(`You have ${playerShots} shots this turn.`);
-          moveStart = false;
-        }
-        let letter, number;
-        let shot = rs.question("Where would you like to fire? ");
-        if (shot.length > 0) {
-          shot = shot
-            .trim()
-            .toLowerCase()
-            .replaceAll(" ", "")
-            .replaceAll(",", "");
-        } else {
-          console.log("You cant leave this empty.");
-          continue;
-        }
-        if (shot === "end") {
-          running = false;
-          break;
-        }
-        if (shot === "debug") {
-          debugging = true;
-          continue;
-        }
-        while (shot.length > 0) {
-          if (i >= playerShots) {
-            aiming = false;
-            output += `No sneaking in extra shots for you. \n` + output;
-            break;
-          }
-          [letter, number] = [shot.slice(0, 1), shot.slice(1, 2)];
-          shot = shot.slice(2);
-          let alreadyShot = false;
-          for (let set of shots) {
-            if (set[0] === letter && set[1] === number) {
-              alreadyShot = true;
-              output += `You already shot at ${letter}${number}.\n`;
-              break;
-            }
-          }
-          if (alreadyShot) {
-            continue;
-          }
-          if (boards[1].getPosition([letter, number]) === "-") {
-            shots.push([letter, number]);
-            i++;
-            aiming = false;
-          } else {
-            output += `You cant shoot at ${letter}${number}.`;
-          }
-        }
-      }
-      if (running === false) {
-        break;
-      }
-    }
-    if (running === false) {
-      break;
-    }
+    console.log(`You have ${playerShots} shots this turn.`);
+    playerAiming(playerShots);
+
     console.log("FIRE THE CANNONS!!");
     for (let shot of shots) {
       let result = boards[1].fire(shot);
