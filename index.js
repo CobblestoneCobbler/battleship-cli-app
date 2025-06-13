@@ -12,34 +12,56 @@ let boards = [];
 let ships = [];
 const minBoardSize = 4;
 const maxBoardSize = 10;
+let running = false;
 let debugging = false;
 let output = "";
 
-function testShot([letter, number], shots) {
+function fireShots(shots, board, player = true) {
+  for (const shot of shots) {
+    let result = board.fire(shot);
+    if (result !== "miss") {
+      if (player) {
+        output += "Your shot at ";
+      } else {
+        output += "The Computer's shot at ";
+      }
+      output += `${shot[0]}${shot[1]} has ${result}\n`;
+    }
+  }
+}
+
+function testShot([letter, number], shots, board, player = true) {
   let alreadyShot = false;
   //TODO switch to find
   for (let set of shots) {
     if (set[0] === letter && set[1] === number) {
       alreadyShot = true;
-      output += `You already shot at ${letter}${number}.\n`;
-      break;
+      if (player) {
+        output += `You already shot at ${letter}${number}.\n`;
+      }
+      return false;
     }
   }
-  if (!alreadyShot && boards[1].getPosition([letter, number]) === "-") {
+  if (!alreadyShot && board.getPosition([letter, number]) === "-") {
     shots.push([letter, number]);
-    aiming = false;
+    return true;
   } else {
-    output += `You cant shoot at ${letter}${number}.`;
+    if (player) {
+      output += `You cant shoot at ${letter}${number}.`;
+    }
   }
 }
 
 function playerAiming(shotCount) {
   let aiming = true;
   let shots = [];
+  output += `You have ${shotCount} shots this turn.`;
   while (aiming) {
     //TODO check for full board
     if (shots.length > 0) {
-      output += `Your current shots are ${shots}. You have ${shotCount} shots remaining.`;
+      output += `Your current shots are ${shots}. You have ${
+        shotCount - shots.length
+      } shots remaining.`;
     }
     updateScreen(debugging);
     console.log(output);
@@ -62,15 +84,149 @@ function playerAiming(shotCount) {
       continue;
     }
     while (shot.length > 0) {
-      if (shotCount <= 0) {
+      if (shotCount <= shots.length) {
         aiming = false;
         output += `No sneaking in extra shots for you. \n` + output;
         break;
       }
-      testShot([shot.slice(0, 1), shot.slice(1, 2)], shots);
+      testShot([shot.slice(0, 1), shot.slice(1, 2)], shots, boards[1]);
       shot = shot.slice(2);
+      if (shotCount - shots.length === 0) {
+        aiming = false;
+        break;
+      }
     }
   }
+  fireShots(shots, boards[1]);
+}
+
+//TODO Change dir when slot is X
+function aimAroundShip(ship, shots) {
+  let undecided = true;
+  let letter, number;
+  let positions = ship.getHitPositions();
+  if (positions.length > 1) {
+    let dir, axis;
+    let distance = 1;
+    if (positions[0][0] === positions[1][0]) {
+      letter = positions[0][0];
+      axis = 1;
+    } else {
+      number = positions[0][1];
+      axis = 0;
+    }
+    if (positions[0][axis] < positions[1][axis]) {
+      dir = "pos";
+    } else {
+      dir = "neg";
+      distance = -1;
+    }
+    while (undecided) {
+      if (axis === 1) {
+        //number moves
+        number = positions[0][axis] + distance;
+        if (number >= boards[0].getSize()) {
+          distance = 0;
+          dir = "neg";
+        }
+        if (number < 0) {
+          distance = 0;
+          dir = "pos";
+        }
+      } else {
+        letter = String.fromCharCode(
+          positions[0][axis].charCodeAt(0) + distance
+        );
+        if (letter.charCodeAt(0) > boards[0].getSize() + 96) {
+          distance = 0;
+          dir = "neg";
+        }
+        if (letter < "a") {
+          distance = 0;
+          dir = "pos";
+        }
+      }
+
+      if (testShot([letter, number], shots, boards[0], false)) {
+        undecided = false;
+      } else {
+        if (dir === "pos") {
+          distance++;
+        } else {
+          distance--;
+        }
+      }
+    }
+  } else {
+    let letter, number;
+    while (undecided) {
+      switch (Math.floor(Math.random() * 4)) {
+        case 0: {
+          letter = String.fromCharCode(positions[0][0].charCodeAt(0) - 1);
+          number = positions[0][1];
+          break;
+        }
+        case 1: {
+          letter = String.fromCharCode(positions[0][0].charCodeAt(0) + 1);
+          number = positions[0][1];
+          break;
+        }
+        case 2: {
+          letter = positions[0][0];
+          number = positions[0][1] - 1;
+          break;
+        }
+        case 3: {
+          letter = positions[0][0];
+          number = positions[0][1] + 1;
+          break;
+        }
+        default: {
+          output += "AI aimAroundShip MathRand out of scope";
+        }
+      }
+      if (testShot([letter, number], shots, boards[0], false)) {
+        undecided = false;
+      }
+    }
+  }
+}
+
+function aimRandom(shots) {
+  let undecided = true;
+  let letter, number;
+  while (undecided) {
+    letter = String.fromCharCode(
+      Math.floor(Math.random() * boards[0].getSize()) + 97
+    );
+    number = Math.floor(Math.random() * boards[0].getSize());
+    if (testShot([letter, number], shots, boards[0], false)) {
+      undecided = false;
+    }
+  }
+}
+
+function aiAiming(shotCount) {
+  let shots = [];
+  let ships = boards[0].getRevealedShips();
+  let aiming = true;
+  if (ships) {
+    for (let ship of ships) {
+      if (shotCount <= shots.length) {
+        aiming = false;
+        break;
+      }
+      aimAroundShip(ship, shots);
+    }
+  }
+  while (aiming) {
+    if (shotCount <= shots.length) {
+      aiming = false;
+      break;
+    }
+    aimRandom(shots);
+  }
+  fireShots(shots, boards[0], false);
 }
 
 function updateScreen(debugging = false) {
@@ -81,7 +237,7 @@ function updateScreen(debugging = false) {
 }
 
 function main() {
-  let running = true;
+  running = true;
   let output = "";
   while (running) {
     let playerShots = boards[0].getShips().reduce((acc, n) => {
@@ -90,32 +246,18 @@ function main() {
       }
       return acc;
     }, 0);
-    let shots = [];
-
     updateScreen();
     console.log(`You have ${playerShots} shots this turn.`);
     playerAiming(playerShots);
 
-    console.log("FIRE THE CANNONS!!");
-    for (let shot of shots) {
-      let result = boards[1].fire(shot);
-      if (result !== "miss") {
-        output += `${shot[0]}${shot[1]} has ${result}\n`;
-      }
-    }
     if (
-      boards[1].getShips().reduce((acc, n) => {
-        if (n.isSunk() === false) {
-          acc++;
-        }
-        return acc;
-      }, 0) === 0
+      !boards[1].getShips().find((n) => {
+        return !n.isSunk();
+      })
     ) {
       updateScreen();
       console.log(output);
-      console.log("You've sunk them all!");
-
-      console.log(`========
+      console.log(`You've sunk them all!\n========
 __   _______ _   _   _    _ _____ _   _
 \\ \\ / /  _  | | | | | |  | |_   _| \\ | |
  \\ V /| | | | | | | | |  | | | | |  \\| |
@@ -134,268 +276,15 @@ __   _______ _   _   _    _ _____ _   _
       }
       return acc;
     }, 0);
-    shots = [];
 
+    aiAiming(aiShots);
     //TODO Axis letter infinite loop (j0 Sailing west, hit j1, j2, loop after j3 === X, cannot find j0)
-    let cycles = 0;
-    for (let i = 0; i < aiShots; i++) {
-      let aiming = true;
-      while (aiming) {
-        let letter, number;
-        let ships = boards[0].getRevealedShips();
-        if (ships !== false && i < ships.length) {
-          let positions = ships[i].getHitPositions();
-          if (positions.length > 1) {
-            let undecided = true;
-            let dir;
-            let distance = 1;
-            //figure out up and down or left and right
-            if (positions[0][0] === positions[1][0]) {
-              letter = positions[0][0];
-              if (positions[0][1] < positions[1][1]) {
-                //sailing west, numbers will increment. May have hit mid ship though
-                dir = "pos";
-              } else {
-                //sailing east, numbers will decrease. May have hit mid ship though
-                dir = "neg";
-              }
-
-              while (undecided) {
-                console.log(
-                  `distance: ${distance}, position: ${positions[0][0]},${positions[0][1]} axis: Letter is constant, dir: ${dir}.`
-                );
-
-                if (dir === "pos") {
-                  if (positions[0][1] + distance < boards[0].getSize()) {
-                    let pos = boards[0].getPosition([
-                      letter,
-                      positions[0][1] + distance,
-                    ]);
-                    if (pos === "-") {
-                      number = positions[0][1] + distance;
-                      undecided = false;
-                    } else if (pos === "X") {
-                      dir = "neg";
-                      distance = 1;
-                      continue;
-                    }
-                  } else {
-                    distance = 1;
-                    dir = "neg";
-                    continue;
-                  }
-                } else {
-                  if (positions[0][1] - distance > 0) {
-                    let pos = boards[0].getPosition([
-                      letter,
-                      positions[0][1] - distance,
-                    ]);
-                    if (pos === "-") {
-                      number = positions[0][1] - distance;
-                      undecided = false;
-                    } else if (pos === "X") {
-                      dir = "pos";
-                      distance = 1;
-                      continue;
-                    }
-                  } else {
-                    distance = 1;
-                    dir = "pos";
-                    continue;
-                  }
-                }
-                distance++;
-              }
-            } else {
-              //number is axis
-              number = positions[0][1];
-              if (positions[0][0] < positions[1][0]) {
-                //sailing North, numbers will increment. May have hit mid ship though
-                dir = "pos";
-              } else {
-                //sailing south, numbers will decrease. May have hit mid ship though
-                dir = "neg";
-              }
-              const charCode = positions[0][0].charCodeAt(0);
-              while (undecided) {
-                console.log(
-                  `distance: ${distance}, position: ${positions[0][0]},${positions[0][1]} axis: number is constant, dir: ${dir}.`
-                );
-                if (dir === "pos") {
-                  if (charCode + distance < 97 + boards[0].getSize()) {
-                    let pos = boards[0].getPosition([
-                      String.fromCharCode(charCode + distance),
-                      number,
-                    ]);
-                    if (pos === "-") {
-                      letter = String.fromCharCode(charCode + distance);
-                      undecided = false;
-                    } else if (pos === "X") {
-                      dir = "neg";
-                      distance = 1;
-                      continue;
-                    }
-                  } else {
-                    distance = 1;
-                    dir = "neg";
-                    continue;
-                  }
-                } else {
-                  if (charCode - distance > 96) {
-                    let pos = boards[0].getPosition([
-                      String.fromCharCode(charCode - distance),
-                      number,
-                    ]);
-                    if (pos === "-") {
-                      letter = String.fromCharCode(charCode - distance);
-                      undecided = false;
-                    } else if (pos === "X") {
-                      dir = "pos";
-                      distance = 1;
-                      continue;
-                    }
-                  } else {
-                    distance = 1;
-                    dir = "pos";
-                    continue;
-                  }
-                }
-                distance++;
-              }
-            }
-          } else {
-            let undecided = true;
-            while (undecided) {
-              switch (Math.floor(Math.random() * 4)) {
-                case 0: {
-                  if (
-                    positions[0][0] === "a" ||
-                    !(
-                      boards[0].getPosition([
-                        String.fromCharCode(positions[0][0].charCodeAt(0) - 1),
-                        positions[0][1],
-                      ]) === "-"
-                    )
-                  ) {
-                    cycles++;
-                    continue;
-                  } else {
-                    undecided = false;
-                    letter = String.fromCharCode(
-                      positions[0][0].charCodeAt(0) - 1
-                    );
-                    number = positions[0][1];
-                    aiming = false;
-                    break;
-                  }
-                }
-                case 1: {
-                  if (
-                    positions[0][0] ===
-                      String.fromCharCode(boards[0].getSize() + 97) ||
-                    !(
-                      boards[0].getPosition([
-                        String.fromCharCode(positions[0][0].charCodeAt(0) + 1),
-                        positions[0][1],
-                      ]) === "-"
-                    )
-                  ) {
-                    cycles++;
-                    continue;
-                  } else {
-                    undecided = false;
-                    letter = String.fromCharCode(
-                      positions[0][0].charCodeAt(0) + 1
-                    );
-                    number = positions[0][1];
-                    aiming = false;
-                    break;
-                  }
-                }
-                case 2: {
-                  if (
-                    positions[0][1] === 0 ||
-                    !(
-                      boards[0].getPosition([
-                        positions[0][0],
-                        positions[0][1] - 1,
-                      ]) === "-"
-                    )
-                  ) {
-                    cycles++;
-                    continue;
-                  } else {
-                    undecided = false;
-                    letter = positions[0][0];
-                    number = positions[0][1] - 1;
-                    aiming = false;
-                    break;
-                  }
-                }
-                case 3: {
-                  if (
-                    positions[0][1] === boards[0].getSize() - 1 ||
-                    !(
-                      boards[0].getPosition([
-                        positions[0][0],
-                        positions[0][1] + 1,
-                      ]) === "-"
-                    )
-                  ) {
-                    cycles++;
-                    continue;
-                  } else {
-                    undecided = false;
-                    letter = positions[0][0];
-                    number = positions[0][1] + 1;
-                    aiming = false;
-                    break;
-                  }
-                }
-                default: {
-                  output += "AI UNDECIDED OUT OF SCOPE \n";
-                }
-              }
-            }
-          }
-        } else {
-          letter = String.fromCharCode(
-            Math.floor(Math.random() * boards[0].getSize()) + 97
-          );
-          number = Math.floor(Math.random() * boards[0].getSize());
-        }
-        if (boards[0].getPosition([letter, number]) === "-") {
-          let alreadyShot = false;
-          for (let set of shots) {
-            if (set[0] === letter && set[1] === number) {
-              alreadyShot = true;
-              break;
-            }
-          }
-          if (alreadyShot) {
-            cycles++;
-            continue;
-          }
-          shots.push([letter, number]);
-          aiming = false;
-        } else {
-          cycles++;
-        }
-      }
-    }
-    //TODO Add output when Ai hits a ship or sinks a ship
-    console.log(`Incoming Fire! Cpu extra cycles: ${cycles}`);
-    for (let shot of shots) {
-      boards[0].fire(shot);
-    }
     if (
-      boards[0].getShips().reduce((acc, n) => {
-        if (n.isSunk() === false) {
-          acc++;
-        }
-        return acc;
-      }, 0) === 0
+      !boards[0].getShips().find((n) => {
+        return !n.isSunk();
+      })
     ) {
+      updateScreen();
       console.log("Your fleet has been destroyed...");
       running = false;
     }
@@ -405,8 +294,7 @@ __   _______ _   _   _    _ _____ _   _
 function setup(size, fleetSize) {
   let playerBoard = new Board("Your Board", size);
   let aiBoard = new Board("Computer Board", size);
-  ships = []; //needed for second play
-  let extraCycles = 0;
+  ships = [];
   let graded = false;
   if (size > 4 && size < 7) {
     graded = rs.keyInYN("Are you here to grade this? ");
@@ -434,10 +322,8 @@ function setup(size, fleetSize) {
         shipTypes[i][3]
       );
     }
-
     console.clear();
     playerBoard.printBoard(true);
-
     ships.push(ship);
     let unset = true;
     while (unset) {
@@ -451,7 +337,6 @@ function setup(size, fleetSize) {
       let direction = rs.question(
         `And which direction should she be sailing? [nsew]  `
       );
-
       if (playerBoard.addShip(ship, position, direction) === false) {
         console.log(
           `Sailing ${direction}, with the front at ${position}, is not able to happen.`
@@ -461,8 +346,6 @@ function setup(size, fleetSize) {
       }
     }
   }
-  console.log("Your fleet is set. Now where will the computer go?");
-
   for (let i = fleetSize - 1; i >= 0; i--) {
     let ship;
     if (graded) {
@@ -508,23 +391,16 @@ function setup(size, fleetSize) {
       }
       let letter = String.fromCharCode(Math.floor(Math.random() * size) + 97);
       let number = Math.floor(Math.random() * size);
-      if (aiBoard.addShip(ship, [letter, number], direction) === false) {
-        extraCycles++;
-      } else {
+      if (aiBoard.addShip(ship, [letter, number], direction)) {
         unset = false;
       }
     }
   }
   boards = [playerBoard, aiBoard];
-
-  console.log(
-    `Computers board has been set, with ${extraCycles} extra cycles.`
-  );
 }
-
-let running = true;
+let playing = true;
 console.log("Welcome to Battleship");
-while (running) {
+while (playing) {
   console.log("Let's setup a game.");
   let size = 0;
   let fleetSize = 0;
@@ -538,15 +414,12 @@ while (running) {
     } else if (size < 10) {
       fleetSize = 4;
     } else if (size === 10) {
-      console.log("Standard Battleship");
       fleetSize = 5;
     } else {
       console.log(`${size} is a bit too big for me.`);
       size = 0;
     }
   }
-
-  console.log(`A size of ${size}, lets give each player ${fleetSize} ships.`);
 
   if (setup(size, fleetSize) !== "skip") {
     main();
@@ -555,7 +428,7 @@ while (running) {
   if (rs.keyInYN("Would you like to play again?")) {
     console.log("Awesome!");
   } else {
-    running = false;
+    playing = false;
   }
 }
 console.log("Thank you for playing.");

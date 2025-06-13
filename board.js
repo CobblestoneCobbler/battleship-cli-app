@@ -33,9 +33,9 @@ export class Board {
           }
         }
       });
-      return !ship;
-    } else {
-      return false;
+      if (ship) {
+        return true;
+      }
     }
   }
   addShip(ship, tipPos, direction) {
@@ -61,6 +61,7 @@ export class Board {
           break;
         }
         default: {
+          console.log("dir ERROR");
           return false;
         }
       }
@@ -132,11 +133,11 @@ export class Board {
     let revealedShips = this.ships.filter((s) => {
       if (s.isRevealed() && !s.isSunk()) {
         return true;
-      } else return false;
+      }
     });
     if (revealedShips.length > 0) {
       return revealedShips;
-    } else return false;
+    }
   }
 }
 export class Ship {
