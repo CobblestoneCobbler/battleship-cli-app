@@ -77,7 +77,6 @@ export class Board {
           return false;
         }
       }
-      //TODO check the letter and number validation
       if (
         letter > 96 &&
         letter < 97 + this.getSize() &&

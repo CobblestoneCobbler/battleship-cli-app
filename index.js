@@ -31,23 +31,22 @@ function fireShots(shots, board, player = true) {
 }
 
 function testShot([letter, number], shots, board, player = true) {
-  let alreadyShot = false;
-  //TODO switch to find
-  for (let set of shots) {
-    if (set[0] === letter && set[1] === number) {
-      alreadyShot = true;
-      if (player) {
-        output += `You already shot at ${letter}${number}.\n`;
-      }
-      return false;
+  if (
+    shots.find((s) => {
+      return s[0] === letter && s[1] === number;
+    })
+  ) {
+    if (player) {
+      output += `You are already aiming at ${letter}${number}.\n`;
     }
+    return false;
   }
-  if (!alreadyShot && board.getPosition([letter, number]) === "-") {
+  if (board.getPosition([letter, number]) === "-") {
     shots.push([letter, number]);
     return true;
   } else {
     if (player) {
-      output += `You cant shoot at ${letter}${number}.`;
+      output += `You can't shoot at ${letter}${number}.`;
     }
   }
 }
@@ -57,7 +56,6 @@ function playerAiming(shotCount) {
   let shots = [];
   output += `You have ${shotCount} shots this turn.`;
   while (aiming) {
-    //TODO check for full board
     if (shots.length > 0) {
       output += `Your current shots are ${shots}. You have ${
         shotCount - shots.length
@@ -308,6 +306,7 @@ function setup(size, fleetSize) {
   let aiBoard = new Board("Computer Board", size);
   ships = [];
   let graded = false;
+  let directions = ["n", "s", "e", "w"];
   if (size > 4 && size < 7) {
     graded = rs.keyInYN("Are you here to grade this? ");
   }
@@ -346,12 +345,19 @@ function setup(size, fleetSize) {
         console.log("Rethinking are we..");
         return "skip";
       }
-      let direction = rs.question(
-        `And which direction should she be sailing? [nsew]  `
+      let direction = rs.keyInSelect(
+        directions,
+        `And which direction should she be sailing?  `
       );
-      if (playerBoard.addShip(ship, position, direction) === false) {
+      if (direction === -1) {
+        console.log("Change your mind? ");
+        continue;
+      }
+      if (
+        playerBoard.addShip(ship, position, directions[direction]) === false
+      ) {
         console.log(
-          `Sailing ${direction}, with the front at ${position}, is not able to happen.`
+          `Sailing ${directions[direction]}, with the front at ${position}, is not able to happen.`
         );
       } else {
         unset = false;
