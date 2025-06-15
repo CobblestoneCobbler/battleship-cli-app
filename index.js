@@ -100,7 +100,6 @@ function playerAiming(shotCount) {
   fireShots(shots, boards[1]);
 }
 
-//TODO Change dir when slot is X
 function aimAroundShip(ship, shots) {
   let undecided = true;
   let letter, number;
@@ -149,6 +148,13 @@ function aimAroundShip(ship, shots) {
 
       if (testShot([letter, number], shots, boards[0], false)) {
         undecided = false;
+      } else if (boards[0].getPosition([letter, number]) === "X") {
+        distance = 0;
+        if (dir === "pos") {
+          dir = "neg";
+        } else {
+          dir = "pos";
+        }
       } else {
         if (dir === "pos") {
           distance++;
@@ -246,6 +252,10 @@ function main() {
       }
       return acc;
     }, 0);
+    let availableShots = boards[1].getAvailableShots();
+    if (availableShots < playerShots) {
+      playerShots = availableShots;
+    }
     updateScreen();
     console.log(`You have ${playerShots} shots this turn.`);
     playerAiming(playerShots);
@@ -276,9 +286,11 @@ __   _______ _   _   _    _ _____ _   _
       }
       return acc;
     }, 0);
-
+    availableShots = boards[0].getAvailableShots();
+    if (availableShots < aiShots) {
+      aiShots = availableShots;
+    }
     aiAiming(aiShots);
-    //TODO Axis letter infinite loop (j0 Sailing west, hit j1, j2, loop after j3 === X, cannot find j0)
     if (
       !boards[0].getShips().find((n) => {
         return !n.isSunk();

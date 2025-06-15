@@ -23,6 +23,18 @@ export class Board {
   getShips() {
     return this.ships;
   }
+  getAvailableShots() {
+    let count = 0;
+    for (let i = 0; i < this.size; i++) {
+      count += this.board[String.fromCharCode(i + 97)].reduce((acc, i) => {
+        if (i === "-") {
+          return acc + 1;
+        }
+        return acc;
+      }, 0);
+    }
+    return count;
+  }
   checkForShip(letter, number) {
     //only to be used durring generation
     if (this.ships.length > 0) {
