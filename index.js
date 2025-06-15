@@ -2,11 +2,11 @@ import * as rs from "readline-sync";
 import { Board, Ship } from "./board.js";
 
 let shipTypes = [
-  ["Crusier", 2, 1, "🟠"],
-  ["Submarine", 3, 1, "🔵"],
-  ["Destroyer", 3, 2, "🟣"],
-  ["Battleship", 4, 3, "🟥"],
-  ["Aircraft Carrier", 5, 1, "🟧"],
+  ["Crusier", 2, 1, `🟠`],
+  ["Submarine", 3, 1, `🔵`],
+  ["Destroyer", 3, 2, `🟣`],
+  ["Battleship", 4, 3, `\u{1F7E5}`],
+  ["Aircraft Carrier", 5, 1, `🟧`],
 ];
 let boards = [];
 let ships = [];
