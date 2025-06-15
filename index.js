@@ -2,11 +2,11 @@ import * as rs from "readline-sync";
 import { Board, Ship } from "./board.js";
 
 let shipTypes = [
-  ["Crusier", 2, 1, `🟠`],
-  ["Submarine", 3, 1, `🔵`],
-  ["Destroyer", 3, 2, `🟣`],
-  ["Battleship", 4, 3, `\u{1F7E5}`],
-  ["Aircraft Carrier", 5, 1, `🟧`],
+  ["Crusier", 2, 1, "C"],
+  ["Submarine", 3, 1, "S"],
+  ["Destroyer", 3, 2, "D"],
+  ["Battleship", 4, 3, "B"],
+  ["Aircraft Carrier", 5, 1, "AC"],
 ];
 let boards = [];
 let ships = [];
@@ -370,7 +370,7 @@ function setup(size, fleetSize) {
       if (size === 5 && i === 2) {
         ship = new Ship(shipTypes[i][0], 2, 1, shipTypes[i][3]);
       } else if (size === 6 && i === 3) {
-        ship = new Ship("Corvette", 2, 1, "🟢");
+        ship = new Ship("Corvette", 2, 1, "CV");
       } else {
         ship = new Ship(
           shipTypes[i][0],
